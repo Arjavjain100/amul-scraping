@@ -82,8 +82,9 @@ If you prefer to run without Docker:
    ```bash
    pip install -r requirements.txt
    ```
+2. Update `DB_PATH` in `config.py`
 
-2. Run the application:
+3. Run the application:
    ```bash
    python main.py
    ```
