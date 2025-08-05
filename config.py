@@ -1,4 +1,4 @@
-DB_PATH = 'data.db'
+DB_PATH = '/app/data/data.db'
 CHECK_INTERVAL_SECONDS = 600  # Check every 10 minutes
 
 # API Configuration

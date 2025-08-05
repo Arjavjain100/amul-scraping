@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  amul-scraper:
+    build: .
+    container_name: amul-scraper
+    restart: unless-stopped
+    volumes:
+      # Mount a volume for persistent database storage
+      - ./data:/app/data
+    environment:
+      # You can override config values here if needed
+      - PYTHONUNBUFFERED=1
+    # Optionally add resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    # Add logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
