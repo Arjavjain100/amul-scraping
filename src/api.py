@@ -1,11 +1,7 @@
-import logging
 from typing import List, Dict, Any, Tuple
 import requests
 import config
-
-# Setup basic logging
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+from logger import default_logger as logger
 
 
 def fetch_api_data() -> List[Dict[str, Any]]:
@@ -20,7 +16,7 @@ def fetch_api_data() -> List[Dict[str, Any]]:
          KeyError: If the expected 'data' key is not in the JSON response.
      """
 
-    logging.info("Fetching data from API...")
+    logger.info("Fetching data from API...")
     response = requests.get(
         url=config.API_URL,
         cookies=config.API_COOKIES,

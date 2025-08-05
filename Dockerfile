@@ -11,9 +11,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
-COPY src/main.py .
-COPY src/config.py .
-
+COPY src/ .
 # Create a directory for the database
 RUN mkdir -p /app/data
 

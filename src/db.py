@@ -1,12 +1,8 @@
 import sqlite3
 import config
 from typing import List, Dict, Any, Tuple
-import logging
 from notification import send_notification
-
-# Setup basic logging
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+from logger import default_logger as logger
 
 
 def init_db() -> None:
@@ -23,9 +19,9 @@ def init_db() -> None:
                 )
             ''')
             conn.commit()
-            logging.info("Database initialized successfully.")
+            logger.info("Database initialized successfully.")
     except sqlite3.Error as e:
-        logging.error(f"Database initialization failed: {e}")
+        logger.error(f"Database initialization failed: {e}")
         raise
 
 
@@ -43,7 +39,7 @@ def get_current_stock_status() -> Dict[str, int]:
             # Create a dictionary of {id: available_status}
             return {row[0]: row[1] for row in cur.fetchall()}
     except sqlite3.Error as e:
-        logging.error(f"Failed to get current stock status from DB: {e}")
+        logger.error(f"Failed to get current stock status from DB: {e}")
         return {}
 
 
@@ -84,7 +80,7 @@ def update_db_and_notify(new_items: List[Dict[str, Any]]) -> None:
                     available=excluded.available
             ''', items_to_update)
             conn.commit()
-            logging.info(
+            logger.info(
                 f"Database updated with {len(items_to_update)} items.")
     except sqlite3.Error as e:
-        logging.error(f"Database update failed: {e}")
+        logger.error(f"Database update failed: {e}")
