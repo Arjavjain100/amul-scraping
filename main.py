@@ -1,49 +1,151 @@
-import os
-import json
-from dotenv import load_dotenv
-from seleniumwire import webdriver
-from seleniumwire.utils import decode
-from selenium.webdriver.common.by import By
+import requests
+import sqlite3
+import time
+import config
+from typing import List, Dict, Any, Tuple
+import logging
 
-load_dotenv()
-AMUL_WEBSITE_URL = os.getenv('AMUL_WEBSITE_URL')
-PINCODE = os.getenv('PINCODE')
-def writeToFile(driver):
-    with open("requests_log.txt", "w") as file:
-        for request in driver.requests:
-            if request.response and "substore=" in request.url:
-                body = decode(request.response.body,request.response.headers.get('Content-Encoding', 'identity'))
-                decoded_body = body.decode('utf-8')
-                json_data = json.loads(decoded_body)
-                items = json_data['data']
-                
-                for item in items:
-                    file.write(f"{item['name']} {item['_id']} {item['available']}\n")
+# Setup basic logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
-                
-                file.write(
-                    f"{request.url}\n"
+
+def init_db() -> None:
+    """Initializes the database and creates the items table if it doesn't exist."""
+    try:
+        with sqlite3.connect(config.DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS items (
+                    id TEXT PRIMARY KEY,
+                    name TEXT,
+                    quantity INTEGER,
+                    available INTEGER -- 0 for false, 1 for true
                 )
-                break
+            ''')
+            conn.commit()
+            logging.info("Database initialized successfully.")
+    except sqlite3.Error as e:
+        logging.error(f"Database initialization failed: {e}")
+        raise
 
 
-options = webdriver.ChromeOptions()
-# options.add_argument("--no-sandbox")
-# options.add_argument("--headless")
+def fetch_api_data() -> List[Dict[str, Any]]:
+    """
+     Fetches product data from the Amul API.
+
+     Returns:
+         A list of dictionaries, where each dictionary represents a product.
+
+     Raises:
+         requests.exceptions.RequestException: For connection errors or HTTP error status codes.
+         KeyError: If the expected 'data' key is not in the JSON response.
+     """
+
+    logging.info("Fetching data from API...")
+    response = requests.get(
+        url=config.API_URL,
+        cookies=config.API_COOKIES,
+        headers=config.API_HEADERS,
+    )
+    # Raise an exception for 4xx or 5xx status codes
+    response.raise_for_status()
+    return response.json()['data']
 
 
-driver = webdriver.Chrome(options=options)
-# driver.implicitly_wait(5)
+def get_current_stock_status() -> Dict[str, int]:
+    """
+    Retrieves the current availability status of all items from the database.
 
-driver.get(AMUL_WEBSITE_URL)
+    Returns:
+        A dictionary mapping item ID to its availability status (1 for available, 0 for not).
+    """
+    try:
+        with sqlite3.connect(config.DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT id, available FROM items")
+            # Create a dictionary of {id: available_status}
+            return {row[0]: row[1] for row in cur.fetchall()}
+    except sqlite3.Error as e:
+        logging.error(f"Failed to get current stock status from DB: {e}")
+        return {}
 
-pincode_input_element = driver.find_element(By.ID,'search')
-pincode_input_element.send_keys(PINCODE)
 
-pincode_found_element = driver.find_element(By.CLASS_NAME,'searchitem-name')
-pincode_found_element.click()
+def update_db_and_notify(new_items: List[Dict[str, Any]]) -> None:
+    """
+    Updates the database with new item data and sends notifications for state changes.
+    Only notifies if an item changes from unavailable to available.
+    """
+    old_stock_status = get_current_stock_status()
 
-driver.wait_for_request(r"substore=",5)
-# writeToFile(driver)
+    items_to_update: List[Tuple] = []
 
-driver.quit()
+    for item in new_items:
+        item_id = item['_id']
+        name = item['name']
+        quantity = item.get('inventory_quantity', 0)
+        is_available = 1 if item.get('available', False) else 0
+
+        items_to_update.append((item_id, name, quantity, is_available))
+
+        # Check for notification condition
+        # Item is newly available if its new status is 1 and old status was 0 or not present
+        # Default to 0 (unavailable) if not in DB
+        old_status = old_stock_status.get(item_id, 0)
+        if is_available and not old_status:
+            send_notification(name, quantity)
+
+    # Batch update the database
+    try:
+        with sqlite3.connect(config.DB_PATH) as conn:
+            cur = conn.cursor()
+            cur.executemany('''
+                INSERT INTO items (id, name, quantity, available)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name=excluded.name,
+                    quantity=excluded.quantity,
+                    available=excluded.available
+            ''', items_to_update)
+            conn.commit()
+            logging.info(
+                f"Database updated with {len(items_to_update)} items.")
+    except sqlite3.Error as e:
+        logging.error(f"Database update failed: {e}")
+
+
+def send_notification(name: str, quantity: int) -> None:
+    """Sends a notification about an item being back in stock."""
+
+    message = f"✅ BACK IN STOCK: {name} is now available!\n   Quantity: {quantity}"
+    logging.info(message)
+
+    # TODO use email/sms/soemthing else for notification
+    print(message)
+
+
+def run() -> None:
+    """Main execution loop."""
+    init_db()
+    while True:
+        try:
+            api_data = fetch_api_data()
+            if api_data:
+                update_db_and_notify(api_data)
+            else:
+                logging.warning("API returned no data.")
+        except requests.exceptions.RequestException as e:
+            logging.error(f"API request failed: {e}")
+        except KeyError:
+            logging.error(
+                "Could not find 'data' key in API response. Response format may have changed.")
+        except Exception as e:
+            logging.error(f"An unexpected error occurred: {e}")
+
+        logging.info(
+            f"Waiting for {config.CHECK_INTERVAL_SECONDS} seconds before next check...")
+        time.sleep(config.CHECK_INTERVAL_SECONDS)
+
+
+if __name__ == "__main__":
+    run()
