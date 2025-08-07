@@ -99,10 +99,7 @@ The application creates an `items` table with the following structure:
 
 ## Notifications
 
-Currently, notifications are logged to the console. Future enhancements planned:
-- Email notifications
-- SMS notifications
-- Push notifications
+Notifications are send using email more details in `EMAIL_SETUP.md`
 
 ## Troubleshooting
 
@@ -126,7 +123,6 @@ The database file is located at `./data/data.db` on your host machine.
 
 ## Future Enhancements
 
-- [ ] Email/SMS notification system
 - [ ] Web dashboard for monitoring
 - [ ] Multiple store location support
 - [ ] Pincode-based substore ID detection

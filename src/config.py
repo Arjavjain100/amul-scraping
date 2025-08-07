@@ -1,3 +1,9 @@
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 DB_PATH = '/app/data/data.db'  # Update this when working on local
 CHECK_INTERVAL_SECONDS = 600  # Check every 10 minutes
 
@@ -30,3 +36,13 @@ API_COOKIES = {
     '__cf_bm': 'AtgNZU9UKIU2nRebGZ34yuGTNMvSln2Qg4EwA5IcUeA-1754374984-1.0.1.1-B76Ar.oWehikT.ZoLavaVATLVNr3r_hbNq2uMaEn3zTFcRb1AlHtbgUDH.4GKVpk.sPiCW4cqG90.QrEhE6TWkZg7tAo3nDFJzlejZYsu7M',
     '_ga_E69VZ8HPCN': 'GS2.1.s1754374985$o12$g1$t1754375006$j39$l0$h656146599',
 }
+
+# Email Configuration
+EMAIL_ENABLED = os.getenv('EMAIL_ENABLED', 'True').lower() == 'true'
+SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
+SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
+EMAIL_FROM = os.getenv('EMAIL_FROM', '')
+EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD', '')
+EMAIL_TO = os.getenv('EMAIL_TO', '').split(',') if os.getenv(
+    'EMAIL_TO') else []  # Comma-separated emails
+EMAIL_SUBJECT = os.getenv('EMAIL_SUBJECT', 'Back in Stock')

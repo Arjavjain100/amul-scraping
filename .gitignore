@@ -24,6 +24,9 @@ coverage.xml
 .pytest_cache
 .hypothesis
 
+# Environment variables
+.env
+
 # Documentation
 README.md
 *.md
