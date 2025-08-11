@@ -29,7 +29,6 @@ coverage.xml
 
 # Documentation
 README.md
-*.md
 
 # IDE
 .vscode
