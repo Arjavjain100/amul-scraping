@@ -9,7 +9,7 @@ from config import (
     EMAIL_FROM,
     EMAIL_PASSWORD,
     EMAIL_TO,
-    EMAIL_SUBJECT
+    EMAIL_SUBJECT,
 )
 
 
@@ -26,23 +26,25 @@ def send_email(subject: str, body: str, to_emails: list[str]) -> bool:
     """
     if not EMAIL_FROM or not EMAIL_PASSWORD:
         logger.warning(
-            "Email credentials not configured. Please set EMAIL_FROM and EMAIL_PASSWORD in config.py")
+            "Email credentials not configured. Please set EMAIL_FROM and EMAIL_PASSWORD in config.py"
+        )
         return False
 
     if not to_emails:
         logger.warning(
-            "No recipient email addresses configured. Please set EMAIL_TO in config.py")
+            "No recipient email addresses configured. Please set EMAIL_TO in config.py"
+        )
         return False
 
     try:
         # Create message
         msg = MIMEMultipart()
-        msg['From'] = EMAIL_FROM
-        msg['To'] = ', '.join(to_emails)
-        msg['Subject'] = subject
+        msg["From"] = EMAIL_FROM
+        msg["To"] = ", ".join(to_emails)
+        msg["Subject"] = subject
 
         # Add body to email
-        msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(body, "plain"))
 
         # Create SMTP session
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
@@ -50,8 +52,7 @@ def send_email(subject: str, body: str, to_emails: list[str]) -> bool:
             server.login(EMAIL_FROM, EMAIL_PASSWORD)
             server.send_message(msg)
 
-        logger.info(
-            f"Email notification sent successfully to {', '.join(to_emails)}")
+        logger.info(f"Email notification sent successfully to {', '.join(to_emails)}")
         return True
 
     except Exception as e:
@@ -85,13 +86,10 @@ This is an automated notification from your Amul stock monitoring system.
         """
 
         success = send_email(
-            subject=f'{name} {EMAIL_SUBJECT}',
-            body=email_body,
-            to_emails=EMAIL_TO
+            subject=f"{name} {EMAIL_SUBJECT}", body=email_body, to_emails=EMAIL_TO
         )
 
         if not success:
-            logger.warning(
-                "Email notification failed - check email configuration")
+            logger.warning("Email notification failed - check email configuration")
     else:
         logger.info("Email notifications are disabled")

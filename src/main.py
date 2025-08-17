@@ -20,12 +20,14 @@ def run() -> None:
             logger.error(f"API request failed: {e}")
         except KeyError:
             logger.error(
-                "Could not find 'data' key in API response. Response format may have changed.")
+                "Could not find 'data' key in API response. Response format may have changed."
+            )
         except Exception as e:
             logger.error(f"An unexpected error occurred: {e}")
 
         logger.info(
-            f"Waiting for {config.CHECK_INTERVAL_SECONDS} seconds before next check...")
+            f"Waiting for {config.CHECK_INTERVAL_SECONDS} seconds before next check..."
+        )
         time.sleep(config.CHECK_INTERVAL_SECONDS)
 
 

@@ -1,12 +1,15 @@
 """
 Centralized logging configuration for the Amul scraper application.
 """
+
 import logging
 import sys
 from typing import Optional
 
 
-def setup_logger(name: Optional[str] = None, level: int = logging.INFO) -> logging.Logger:
+def setup_logger(
+    name: Optional[str] = None, level: int = logging.INFO
+) -> logging.Logger:
     """
     Creates and configures a logger with consistent formatting.
 
@@ -29,7 +32,7 @@ def setup_logger(name: Optional[str] = None, level: int = logging.INFO) -> loggi
 
     # Create formatter
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     handler.setFormatter(formatter)
 
@@ -41,4 +44,4 @@ def setup_logger(name: Optional[str] = None, level: int = logging.INFO) -> loggi
 
 
 # Create a default logger for the application
-default_logger = setup_logger('amul_scraper')
+default_logger = setup_logger("amul_scraper")

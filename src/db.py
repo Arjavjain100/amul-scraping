@@ -10,14 +10,14 @@ def init_db() -> None:
     try:
         with sqlite3.connect(config.DB_PATH) as conn:
             cur = conn.cursor()
-            cur.execute('''
+            cur.execute("""
                 CREATE TABLE IF NOT EXISTS items (
                     id TEXT PRIMARY KEY,
                     name TEXT,
                     quantity INTEGER,
                     available INTEGER -- 0 for false, 1 for true
                 )
-            ''')
+            """)
             conn.commit()
             logger.info("Database initialized successfully.")
     except sqlite3.Error as e:
@@ -53,10 +53,10 @@ def update_db_and_notify(new_items: List[Dict[str, Any]]) -> None:
     items_to_update: List[Tuple] = []
 
     for item in new_items:
-        item_id = item['_id']
-        name = item['name']
-        quantity = item.get('inventory_quantity', 0)
-        is_available = 1 if item.get('available', False) else 0
+        item_id = item["_id"]
+        name = item["name"]
+        quantity = item.get("inventory_quantity", 0)
+        is_available = 1 if item.get("available", False) else 0
 
         items_to_update.append((item_id, name, quantity, is_available))
 
@@ -71,16 +71,18 @@ def update_db_and_notify(new_items: List[Dict[str, Any]]) -> None:
     try:
         with sqlite3.connect(config.DB_PATH) as conn:
             cur = conn.cursor()
-            cur.executemany('''
+            cur.executemany(
+                """
                 INSERT INTO items (id, name, quantity, available)
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name=excluded.name,
                     quantity=excluded.quantity,
                     available=excluded.available
-            ''', items_to_update)
+            """,
+                items_to_update,
+            )
             conn.commit()
-            logger.info(
-                f"Database updated with {len(items_to_update)} items.")
+            logger.info(f"Database updated with {len(items_to_update)} items.")
     except sqlite3.Error as e:
         logger.error(f"Database update failed: {e}")
