@@ -8,6 +8,8 @@ services:
     volumes:
       # Mount a volume for persistent database storage
       - ./data:/app/data
+    env_file:
+      - .env
     environment:
       # You can override config values here if needed
       - PYTHONUNBUFFERED=1

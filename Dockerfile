@@ -1,5 +1,5 @@
-# Use Python 3.11 slim image as base
-FROM python:3.11-slim
+# Use plawright image as base
+FROM mcr.microsoft.com/playwright/python:v1.54.0-noble
 
 # Set working directory in the container
 WORKDIR /app
@@ -12,6 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
 COPY src/ .
+# Copy the .env file
+COPY .env .
 # Create a directory for the database
 RUN mkdir -p /app/data
 
