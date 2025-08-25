@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 PINCODE = "248001"
-DB_PATH = "/app/data/data.db"  # Update this when working on local
+DB_PATH = "/app/data/data.db"  # Update this to ./data/data.db when working on local
 CHECK_INTERVAL_SECONDS = 600  # Check every 10 minutes
 
 # API Configuration

@@ -1,7 +1,7 @@
 import sqlite3
 import config
 from typing import List, Dict, Any, Tuple
-from notification import send_notification
+from notification import send_consolidated_notification
 from logger import default_logger as logger
 
 
@@ -51,6 +51,7 @@ def update_db_and_notify(new_items: List[Dict[str, Any]]) -> None:
     old_stock_status = get_current_stock_status()
 
     items_to_update: List[Tuple] = []
+    newly_available_items: List[Dict[str, Any]] = []
 
     for item in new_items:
         item_id = item["_id"]
@@ -65,7 +66,7 @@ def update_db_and_notify(new_items: List[Dict[str, Any]]) -> None:
         # Default to 0 (unavailable) if not in DB
         old_status = old_stock_status.get(item_id, 0)
         if is_available and not old_status:
-            send_notification(name, quantity)
+            newly_available_items.append({"name": name, "quantity": quantity})
 
     # Batch update the database
     try:
@@ -86,3 +87,7 @@ def update_db_and_notify(new_items: List[Dict[str, Any]]) -> None:
             logger.info(f"Database updated with {len(items_to_update)} items.")
     except sqlite3.Error as e:
         logger.error(f"Database update failed: {e}")
+
+    # Send consolidated notification for all newly available items
+    if newly_available_items:
+        send_consolidated_notification(newly_available_items)

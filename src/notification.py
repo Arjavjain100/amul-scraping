@@ -93,3 +93,64 @@ This is an automated notification from your Amul stock monitoring system.
             logger.warning("Email notification failed - check email configuration")
     else:
         logger.info("Email notifications are disabled")
+
+
+def send_consolidated_notification(items: list[dict]) -> None:
+    """Sends a consolidated notification about multiple items being back in stock.
+
+    Args:
+        items: List of dictionaries with 'name' and 'quantity' keys for each item
+    """
+    if not items:
+        return
+
+    # Log all items individually
+    for item in items:
+        message = f"✅ BACK IN STOCK: {item['name']} is now available!\n   Quantity: {item['quantity']}"
+        logger.info(message)
+
+    # Send consolidated email notification if enabled
+    if EMAIL_ENABLED:
+        if len(items) == 1:
+            # If only one item, use the original single-item format
+            item = items[0]
+            email_body = f"""Good news!
+
+The product "{item["name"]}" is now back in stock on Amul's website.
+
+Details:
+• Product: {item["name"]}
+• Available Quantity: {item["quantity"]}
+
+Don't miss out - get it while it's available!
+
+This is an automated notification from your Amul stock monitoring system.
+            """
+            subject = f"{item['name']} {EMAIL_SUBJECT}"
+        else:
+            # Multiple items - create consolidated notification
+            item_list = "\n".join(
+                [f"• {item['name']} (Quantity: {item['quantity']})" for item in items]
+            )
+            total_items = len(items)
+
+            email_body = f"""Great news!
+
+{total_items} products are now back in stock on Amul's website:
+
+{item_list}
+
+Don't miss out - get them while they're available!
+
+This is an automated notification from your Amul stock monitoring system.
+            """
+            subject = f"{total_items} Products {EMAIL_SUBJECT}"
+
+        success = send_email(subject=subject, body=email_body, to_emails=EMAIL_TO)
+
+        if not success:
+            logger.warning(
+                "Consolidated email notification failed - check email configuration"
+            )
+    else:
+        logger.info("Email notifications are disabled")
