@@ -4,6 +4,8 @@ import config
 import random
 import time
 from logger import default_logger as logger
+from session_storage import session_storage
+from api_client import api_client
 
 
 def scrape_amul_data(pincode: str) -> List[Dict[str, Any]]:
@@ -47,6 +49,22 @@ def scrape_amul_data(pincode: str) -> List[Dict[str, Any]]:
                     logger.info(
                         f"Captured API response with {len(response_data)} items"
                     )
+                    # Save session data (headers) for future API calls
+                    if len(response_data) > 0:
+                        try:
+                            # Get headers from the last successful request
+                            headers = response.headers
+
+                            # Save headers data
+                            session_storage.save_headers(headers)
+                            logger.info(
+                                "Session header data saved successfully for future API calls"
+                            )
+
+                        except Exception as e:
+                            logger.error(
+                                f"Failed to save session header data: {e}")
+
                 except Exception as e:
                     logger.error(f"Error parsing API response: {e}")
 
@@ -69,6 +87,17 @@ def scrape_amul_data(pincode: str) -> List[Dict[str, Any]]:
         except Exception:
             logger.warning("Did not receive API response in time")
 
+        try:
+            # Get cookies from the browser context
+            cookies = context.cookies()
+            # Save cookies
+            session_storage.save_cookies(cookies)
+            logger.info(
+                "Session cookies saved successfully for future API calls")
+
+        except Exception as e:
+            logger.error(f"Failed to save cookies session data: {e}")
+
         # Add short delay for late responses
         time.sleep(random.uniform(2, 4))
 
@@ -81,3 +110,47 @@ def scrape_amul_data(pincode: str) -> List[Dict[str, Any]]:
         logger.warning(f"No data captured for {pincode}")
 
     return response_data
+
+
+def get_amul_data(pincode: str) -> List[Dict[str, Any]]:
+    """Enhanced function that tries API call first, falls back to full scraping.
+
+    Args:
+        pincode: The pincode to filter products for
+
+    Returns:
+        List of product dictionaries
+    """
+    logger.info(f"Getting Amul data for pincode: {pincode}")
+
+    # First, try to use saved session data for direct API call
+    if session_storage.has_session_data():
+        logger.info("Attempting direct API call with saved session data")
+
+        # Validate session before using it
+        if api_client.validate_session():
+            # Try direct API call
+            api_data = api_client.fetch_products(pincode)
+            if api_data:
+                return api_data
+            else:
+                logger.warning("Direct API call failed, clearing session data")
+                session_storage.clear_session_data()
+        else:
+            logger.warning("Session validation failed, clearing session data")
+            session_storage.clear_session_data()
+    else:
+        logger.info("No saved session data available")
+
+    # If API call failed or no session data, fall back to full scraping
+    logger.info("Falling back to full website scraping")
+    scraped_data = scrape_amul_data(pincode)
+
+    if scraped_data:
+        logger.info(
+            f"Full scraping successful - retrieved {len(scraped_data)} products"
+        )
+        return scraped_data
+    else:
+        logger.error("Both API call and full scraping failed")
+        return []

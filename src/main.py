@@ -3,7 +3,7 @@ from logger import default_logger as logger
 import time
 import config
 from db import update_db_and_notify, init_db
-from scraper import scrape_amul_data
+from scraper import get_amul_data
 
 
 def run() -> None:
@@ -11,7 +11,7 @@ def run() -> None:
     init_db()
     while True:
         try:
-            api_data = scrape_amul_data(config.PINCODE)
+            api_data = get_amul_data(config.PINCODE)
             if api_data:
                 update_db_and_notify(api_data)
             else:
