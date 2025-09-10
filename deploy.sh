@@ -18,6 +18,7 @@ docker rm amul-scraper 2>/dev/null || true
 # Run the container
 echo "🚀 Starting new container..."
 docker run -d \
+  --init \
   --name amul-scraper \
   --restart unless-stopped \
   -v "$(pwd)/data:/app/data" \
