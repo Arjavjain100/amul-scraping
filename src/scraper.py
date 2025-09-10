@@ -102,6 +102,8 @@ def scrape_amul_data(pincode: str) -> List[Dict[str, Any]]:
         time.sleep(random.uniform(2, 4))
 
         logger.info(f"Page loaded: {page.title()}")
+        page.close()
+        context.close()
         browser.close()
 
     if response_data:
